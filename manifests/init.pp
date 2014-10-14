@@ -288,8 +288,8 @@
 # Copyright 2013, Net-a-Porter Inc
 #
 class graphite (
-  $group                     = '',
-  $user                      = '',
+  $group                     = 'graphite',
+  $user                      = 'graphite',
   $max_cache_size            = inf,
   $max_updates_per_second    = 500,
   $max_creates_per_minute    = 50,
@@ -341,12 +341,9 @@ class graphite (
     }
   },
   $web_servername            = $::fqdn,
-  $web_group                 = undef,
-  $web_user                  = undef,
+  $web_group                 = 'apache',
+  $web_user                  = 'apache',
   $web_cors_allow_from_all   = false,
-  $apache_port               = 80,
-  $apache_port_https         = 443,
-  $apache_24                 = false,
   $django_1_4_or_less        = false,
   $django_db_engine          = 'django.db.backends.sqlite3',
   $django_db_name            = '/var/lib/graphite-web/graphite.db',

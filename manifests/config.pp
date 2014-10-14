@@ -13,19 +13,37 @@ class graphite::config {
 
   exec { 'Initial django db creation':
     command     => 'python /usr/lib/python2.6/site-packages/graphite/manage.py syncdb --noinput',
+    cwd         => '/usr/lib/python2.6/site-packages/graphite/',
+    user        => $::graphite::web_user,
     refreshonly => true,
-    require     => File['/etc/graphite-web/local_settings.py'];
+    subscribe   => File['/etc/graphite-web/local_settings.py'],
+    require     => File['/etc/graphite-web/local_settings.py'],
   }
 
 
   # Deploy configfiles
 
+  file{'/var/lib/graphite-web/':
+    ensure => directory,
+    owner  => $::graphite::web_user,
+    group  => $::graphite::web_group,
+    mode   => '0755',
+  }
   file {
     '/etc/graphite-web/local_settings.py':
       ensure  => file,
       mode    => '0644',
+      owner   => $::graphite::web_user,
+      group   => $::graphite::web_group,
       content => template('graphite/conf/local_settings.py.erb'),
-      require => $web_server_package_require;
+  }
+  file {
+    '/usr/share/graphite/graphite-web.wsgi':
+      ensure  => file,
+      owner   => $::graphite::web_user,
+      group   => $::graphite::web_group,
+      mode    => '0644',
+      content => template('graphite/conf/graphite.wsgi.erb'),
   }
 
   if $::graphite::remote_user_header_name != undef {
@@ -34,7 +52,6 @@ class graphite::config {
         ensure  => file,
         mode    => '0644',
         content => template('graphite/conf/custom_auth.py.erb'),
-        require => $web_server_package_require;
     }
   }
 
