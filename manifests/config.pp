@@ -134,8 +134,15 @@ class graphite::config {
     enable     => true,
     hasstatus  => true,
     hasrestart => true,
+    require    => File['/etc/init.d/carbon-cache'];
   }
 
+  file { '/etc/init.d/carbon-cache':
+    ensure  => file,
+    mode    => '0750',
+    content => template("graphite/etc/init.d/${::osfamily}/carbon-cache.erb"),
+    require => File['/etc/carbon/carbon.conf'];
+  }
 
   if $graphite::gr_enable_carbon_relay {
     service { 'carbon-relay':
@@ -143,8 +150,15 @@ class graphite::config {
       enable     => true,
       hasstatus  => true,
       hasrestart => true,
+      require    => File['/etc/init.d/carbon-relay'];
     }
 
+    file { '/etc/init.d/carbon-relay':
+      ensure  => file,
+      mode    => '0750',
+      content => template("graphite/etc/init.d/${::osfamily}/carbon-relay.erb"),
+      require => File['/etc/carbon/carbon.conf'];
+    }
   }
 
   if $graphite::gr_enable_carbon_aggregator {
@@ -153,7 +167,14 @@ class graphite::config {
       enable     => true,
       hasstatus  => true,
       hasrestart => true,
+      require    => File['/etc/init.d/carbon-aggregator'];
     }
 
+    file { '/etc/init.d/carbon-aggregator':
+      ensure  => file,
+      mode    => '0750',
+      content => template("graphite/etc/init.d/${::osfamily}/carbon-aggregator.erb"),
+      require => File['/etc/carbon/carbon.conf'];
+    }
   }
 }
