@@ -436,6 +436,7 @@ class graphite (
   $gr_django_db_host            = '',
   $gr_django_db_port            = '',
   $gr_enable_carbon_relay       = false,
+  $gr_relay_enable_udp_listener = 'False',
   $gr_relay_line_interface      = '0.0.0.0',
   $gr_relay_line_port           = 2013,
   $gr_relay_pickle_interface    = '0.0.0.0',

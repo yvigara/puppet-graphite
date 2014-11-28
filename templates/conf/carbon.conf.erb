@@ -239,6 +239,7 @@ ENABLE_LOGROTATION = True
 # This user must have write access to the local data directory
 USER = <%= scope.lookupvar('graphite::gr_user') %>
 
+ENABLE_UDP_LISTENER = <%= scope.lookupvar('graphite::gr_relay_enable_udp_listener') %>
 LINE_RECEIVER_INTERFACE = <%= scope.lookupvar('graphite::gr_relay_line_interface') %>
 LINE_RECEIVER_PORT = <%= scope.lookupvar('graphite::gr_relay_line_port') %>
 PICKLE_RECEIVER_INTERFACE = <%= scope.lookupvar('graphite::gr_relay_pickle_interface') %>
