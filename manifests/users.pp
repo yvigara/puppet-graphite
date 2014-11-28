@@ -12,10 +12,10 @@ class graphite::users {
     ensure     => present,
     uid        => $uid,
     gid        => $gid,
-    home       => "/home/${graphite::gr_user}",
-    comment    => 'Graphite User',
-    shell      => '/bin/false',
-    managehome => true,
+    home       => '/var/lib/carbon',
+    comment    => 'Carbon cache daemon',
+    shell      => '/sbin/nologin',
+    managehome => false,
   }
 }
 
