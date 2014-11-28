@@ -1,5 +1,12 @@
-# == class: graphite::config
-
+# == Class: graphite::config
+#
+# This class configures graphite/carbon/whisper and SHOULD NOT
+# be called directly.
+#
+# === Parameters
+#
+# None.
+#
 class graphite::config {
 
   Exec { path => '/bin:/usr/bin:/usr/sbin' }
@@ -14,7 +21,7 @@ class graphite::config {
   exec { 'Initial django db creation':
     command     => 'python /usr/lib/python2.6/site-packages/graphite/manage.py syncdb --noinput',
     cwd         => '/usr/lib/python2.6/site-packages/graphite/',
-    user        => $::graphite::web_user,
+    user        => $::graphite::gr_web_user,
     refreshonly => true,
     subscribe   => File['/etc/graphite-web/local_settings.py'],
     require     => File['/etc/graphite-web/local_settings.py'],
@@ -25,28 +32,28 @@ class graphite::config {
 
   file{'/var/lib/graphite-web/':
     ensure => directory,
-    owner  => $::graphite::web_user,
-    group  => $::graphite::web_group,
+    owner  => $::graphite::gr_web_user,
+    group  => $::graphite::gr_web_group,
     mode   => '0755',
   }
   file {
     '/etc/graphite-web/local_settings.py':
       ensure  => file,
       mode    => '0644',
-      owner   => $::graphite::web_user,
-      group   => $::graphite::web_group,
+      owner   => $::graphite::gr_web_user,
+      group   => $::graphite::gr_web_group,
       content => template('graphite/conf/local_settings.py.erb'),
   }
   file {
     '/usr/share/graphite/graphite-web.wsgi':
       ensure  => file,
-      owner   => $::graphite::web_user,
-      group   => $::graphite::web_group,
+      owner   => $::graphite::gr_web_user,
+      group   => $::graphite::gr_web_group,
       mode    => '0644',
       content => template('graphite/conf/graphite.wsgi.erb'),
   }
 
-  if $::graphite::remote_user_header_name != undef {
+  if $::graphite::gr_remote_user_header_name != undef {
     file {
       '/opt/graphite/webapp/graphite/custom_auth.py':
         ensure  => file,
@@ -56,20 +63,20 @@ class graphite::config {
   }
 
   # configure carbon engines
-  if $::graphite::enable_carbon_relay and $::graphite::enable_carbon_aggregator {
+  if $::graphite::gr_enable_carbon_relay and $::graphite::gr_enable_carbon_aggregator {
     $notify_services = [
       Service['carbon-aggregator'],
       Service['carbon-relay'],
       Service['carbon-cache']
     ]
   }
-  elsif $::graphite::enable_carbon_relay {
+  elsif $::graphite::gr_enable_carbon_relay {
     $notify_services = [
       Service['carbon-relay'],
       Service['carbon-cache']
     ]
   }
-  elsif $::graphite::enable_carbon_aggregator {
+  elsif $::graphite::gr_enable_carbon_aggregator {
     $notify_services = [
       Service['carbon-aggregator'],
       Service['carbon-cache']
@@ -79,7 +86,7 @@ class graphite::config {
     $notify_services = [ Service['carbon-cache'] ]
   }
 
-  if $::graphite::enable_carbon_relay {
+  if $::graphite::gr_enable_carbon_relay {
 
     file {
       '/etc/carbon/relay-rules.conf':
@@ -89,7 +96,7 @@ class graphite::config {
     }
   }
 
-  if $::graphite::enable_carbon_aggregator {
+  if $::graphite::gr_enable_carbon_aggregator {
 
     file {
       '/etc/carbon/aggregation-rules.conf':
@@ -110,11 +117,18 @@ class graphite::config {
       notify  => $notify_services;
     '/etc/carbon/storage-aggregation.conf':
       mode    => '0644',
-      content => template('graphite/conf/storage-aggregation.conf.erb'),
+      content => template('graphite/conf/storage-aggregation.conf.erb');
       #notify  => $notify_services;
+    '/etc/carbon/whitelist.conf':
+      mode    => '0644',
+      content => template('graphite/conf/whitelist.conf.erb');
+    '/etc/carbon/blacklist.conf':
+      mode    => '0644',
+      content => template('graphite/conf/blacklist.conf.erb');
   }
 
   # startup carbon engine
+
   service { 'carbon-cache':
     ensure     => running,
     enable     => true,
@@ -123,7 +137,7 @@ class graphite::config {
   }
 
 
-  if $graphite::enable_carbon_relay {
+  if $graphite::gr_enable_carbon_relay {
     service { 'carbon-relay':
       ensure     => running,
       enable     => true,
@@ -133,7 +147,7 @@ class graphite::config {
 
   }
 
-  if $graphite::enable_carbon_aggregator {
+  if $graphite::gr_enable_carbon_aggregator {
     service {'carbon-aggregator':
       ensure     => running,
       enable     => true,
@@ -142,6 +156,4 @@ class graphite::config {
     }
 
   }
-
 }
-
