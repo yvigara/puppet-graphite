@@ -140,7 +140,7 @@ class graphite::config {
   file { '/etc/init.d/carbon-cache':
     ensure  => file,
     mode    => '0750',
-    content => template("graphite/etc/init.d/${::osfamily}/carbon-cache.erb"),
+    content => template("graphite/etc/init.d/carbon-cache.erb"),
     require => File['/etc/carbon/carbon.conf'];
   }
 
@@ -156,7 +156,7 @@ class graphite::config {
     file { '/etc/init.d/carbon-relay':
       ensure  => file,
       mode    => '0750',
-      content => template("graphite/etc/init.d/${::osfamily}/carbon-relay.erb"),
+      content => template("graphite/etc/init.d/carbon-relay.erb"),
       require => File['/etc/carbon/carbon.conf'];
     }
   }
@@ -173,7 +173,7 @@ class graphite::config {
     file { '/etc/init.d/carbon-aggregator':
       ensure  => file,
       mode    => '0750',
-      content => template("graphite/etc/init.d/${::osfamily}/carbon-aggregator.erb"),
+      content => template("graphite/etc/init.d/carbon-aggregator.erb"),
       require => File['/etc/carbon/carbon.conf'];
     }
   }
