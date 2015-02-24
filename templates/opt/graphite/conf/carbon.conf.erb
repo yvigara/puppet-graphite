@@ -67,6 +67,9 @@ MAX_UPDATES_PER_SECOND = <%= scope.lookupvar('graphite::gr_max_updates_per_secon
 # relatively low and carbon has cached a lot of updates; it enables the carbon
 # daemon to shutdown more quickly.
 # MAX_UPDATES_PER_SECOND_ON_SHUTDOWN = 1000
+<% unless [:undef, nil].include? scope['graphite::gr_max_updates_per_second_on_shutdown'] -%>
+MAX_UPDATES_PER_SECOND_ON_SHUTDOWN = <%= scope['graphite::gr_max_updates_per_second_on_shutdown'] %>
+<% end -%>
 
 # Softly limits the number of whisper files that get created each minute.
 # Setting this value low (like at 50) is a good way to ensure your graphite
@@ -136,7 +139,7 @@ LOG_CACHE_QUEUE_SORTS = True
 # the OS's i/o scheduler is expected to compensate for the random write
 # pattern.
 #
-CACHE_WRITE_STRATEGY = sorted
+CACHE_WRITE_STRATEGY = <%= scope.lookupvar('graphite::gr_cache_write_strategy') %>
 
 # On some systems it is desirable for whisper to write synchronously.
 # Set this option to True if you'd like to try this. Basically it will
@@ -333,6 +336,13 @@ LINE_RECEIVER_INTERFACE = <%= scope.lookupvar('graphite::gr_aggregator_line_inte
 LINE_RECEIVER_PORT = <%= scope.lookupvar('graphite::gr_aggregator_line_port') %>
 PICKLE_RECEIVER_INTERFACE = <%= scope.lookupvar('graphite::gr_aggregator_pickle_interface') %>
 PICKLE_RECEIVER_PORT = <%= scope.lookupvar('graphite::gr_aggregator_pickle_port') %>
+
+# Set this to True to enable the UDP listener. By default this is off
+# because it is very common to run multiple carbon daemons and managing
+# another (rarely used) port for every carbon instance is not fun.
+ENABLE_UDP_LISTENER = <%= scope.lookupvar('graphite::gr_aggregator_enable_udp_listener') %>
+UDP_RECEIVER_INTERFACE = <%= scope.lookupvar('graphite::gr_aggregator_udp_receiver_interface') %>
+UDP_RECEIVER_PORT = <%= scope.lookupvar('graphite::gr_aggregator_udp_receiver_port') %>
 
 # Set to false to disable logging of successful connections
 LOG_LISTENER_CONNECTIONS = True

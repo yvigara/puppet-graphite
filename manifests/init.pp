@@ -19,6 +19,11 @@
 #   Limits the number of whisper update_many() calls per second, which
 #   effectively means the number of write requests sent to the disk.
 #   Default is 500.
+# [*gr_max_updates_per_second_on_shutdown*]
+#   Changes the limits of 'gr_max_updates_per_second' when a stop/shutdown
+#   is initiated to another value to speed up/slow down flushing if carbon is
+#   going to shutdown but cached a lot.
+#   Default is 'undef' which means 'do not change gr_max_updates_per_second on shutdown'.
 # [*gr_max_creates_per_minute*]
 #   Softly limits the number of whisper files that get created each minute.
 #   Default is 50.
@@ -67,6 +72,9 @@
 # [*gr_cache_query_port*]
 #   Self explaining.
 #   Default is 7002.
+# [*gr_cache_write_strategy*]
+#   The thread that writes metrics to disk can use on of the following strategies: sorted, max and naive.
+#   Default is 'sorted'.
 # [*gr_timezone*]
 #   Timezone for graphite to be used.
 #   Default is GMT.
@@ -147,7 +155,7 @@
 #   Default is graphite/etc/apache2/sites-available/graphite.conf.erb
 # [*gr_apache_24*]
 #   Boolean to enable configuration parts for Apache 2.4 instead of 2.2
-#   Default is false. (use Apache 2.2 config)
+#   Default is false/true (autodected. see params.pp)
 # [*gr_django_1_4_or_less*]
 #   Set to true to use old Django settings style.
 #   Default is false.
@@ -193,6 +201,15 @@
 #   Default is '0.0.0.0'
 # [*gr_aggregator_line_port*]
 #   Default is 2023.
+# [*gr_aggregator_enable_udp_listener*]
+#   Set this to True to enable the UDP listener.
+#   Default is False.
+# [*gr_aggregator_udp_receiver_interface*]
+#   Its clear, isnt it?
+#   Default is 0.0.0.0
+# [*gr_aggregator_udp_receiver_port*]
+#   Self explaining.
+#   Default is 2023
 # [*gr_aggregator_pickle_interface*]
 #   Default is '0.0.0.0'
 # [*gr_aggregator_pickle_port*]
@@ -291,7 +308,7 @@
 # [*gr_ldap_user_query*]
 #   Set ldap user query.  Default = '(username=%s)'
 # [*gr_ldap_options*]
-#   Hash of additional LDAP options to be enabled. 
+#   Hash of additional LDAP options to be enabled.
 #   For example, { 'ldap.OPT_X_TLS_REQUIRE_CERT' => 'ldap.OPT_X_TLS_ALLOW' }
 #   Default = { }
 # [*gr_use_remote_user_auth*]
@@ -308,7 +325,7 @@
 # [*gunicorn_workers*]
 #   value to pass to gunicorn's --worker arg.
 #   Default is 2
-# [*gr_cache_instances*]    
+# [*gr_cache_instances*]
 #   Allow multiple additional cache instances. (beside the default one)
 #   Default = []
 #   Example value:
@@ -350,6 +367,54 @@
 #   Trigges the creation of metricaccess.log which logs access to Whisper
 #   and RRD data files
 #   Default is 'False' (String)
+# [*wsgi_processes*]
+#   WSGI process count.
+#   Default is 5
+# [*wsgi_threads*]
+#   WSGI process threads.
+#   Default is 5
+# [*wsgi_inactivity-timeout*]
+#   WSGI inactivity-timeout in seconds.
+#   Default is 120
+# [*gr_django_tagging_pkg*]
+#   String. The name of the django tagging package to install
+#   Default: django-tagging
+# [*gr_django_tagging_ver*] 
+#   String. The version of the django tagging package to install
+#   Default: 0.3.1
+# [*gr_twisted_pkg*]
+#   String. The name of the twisted package to install
+#   Default: Twisted
+# [*gr_twisted_ver*] 
+#   String. The version of the twisted package to install
+#   Default: 11.1.0
+# [*gr_txamqp_pkg*]
+#   String. The name of the txamqp package to install
+#   Default: txAMQP
+# [*gr_txamqp_ver*] 
+#   String. The version of the txamqp package to install
+#   Default: 0.4
+# [*gr_graphite_pkg*]
+#   String. The name of the graphite package to install
+#   Default: graphite-web
+# [*gr_graphite_ver*] 
+#   String. The version of the graphite package to install
+#   Default: 0.9.12
+# [*gr_carbon_pkg*]
+#   String. The name of the carbon package to install
+#   Default: carbon
+# [*gr_carbon_ver*] 
+#   String. The version of the carbon package to install
+#   Default: 0.9.12
+# [*gr_whisper_pkg*]
+#   String. The name of the whisper package to install
+#   Default: whisper
+# [*gr_whisper_ver*] 
+#   String. The version of the whisper package to install
+#   Default: 0.9.12
+# [*gr_pip_install*]
+#   Boolean. Should the package be installed via pip
+#   Default: true  
 #
 # === Examples
 #
@@ -360,28 +425,30 @@
 # }
 #
 class graphite (
-  $gr_group                     = 'graphite',
-  $gr_user                      = 'graphite',
-  $gr_max_cache_size            = inf,
-  $gr_max_updates_per_second    = 500,
-  $gr_max_creates_per_minute    = 50,
-  $gr_carbon_metric_prefix      = 'carbon',
-  $gr_carbon_metric_interval    = 60,
-  $gr_line_receiver_interface   = '0.0.0.0',
-  $gr_line_receiver_port        = 2003,
-  $gr_enable_udp_listener       = 'False',
-  $gr_udp_receiver_interface    = '0.0.0.0',
-  $gr_udp_receiver_port         = 2003,
-  $gr_pickle_receiver_interface = '0.0.0.0',
-  $gr_pickle_receiver_port      = 2004,
-  $gr_use_insecure_unpickler    = 'False',
-  $gr_use_whitelist             = 'False',
-  $gr_whitelist                 = [ '.*' ],
-  $gr_blacklist                 = [ ],
-  $gr_cache_query_interface     = '0.0.0.0',
-  $gr_cache_query_port          = 7002,
-  $gr_timezone                  = 'GMT',
-  $gr_storage_schemas           = [
+  $gr_group                              = 'graphite',
+  $gr_user                               = 'graphite',
+  $gr_max_cache_size                     = inf,
+  $gr_max_updates_per_second             = 500,
+  $gr_max_updates_per_second_on_shutdown = undef,
+  $gr_max_creates_per_minute             = 50,
+  $gr_carbon_metric_prefix               = 'carbon',
+  $gr_carbon_metric_interval             = 60,
+  $gr_line_receiver_interface            = '0.0.0.0',
+  $gr_line_receiver_port                 = 2003,
+  $gr_enable_udp_listener                = 'False',
+  $gr_udp_receiver_interface             = '0.0.0.0',
+  $gr_udp_receiver_port                  = 2003,
+  $gr_pickle_receiver_interface          = '0.0.0.0',
+  $gr_pickle_receiver_port               = 2004,
+  $gr_use_insecure_unpickler             = 'False',
+  $gr_use_whitelist                      = 'False',
+  $gr_whitelist                          = [ '.*' ],
+  $gr_blacklist                          = [ ],
+  $gr_cache_query_interface              = '0.0.0.0',
+  $gr_cache_query_port                   = 7002,
+  $gr_cache_write_strategy               = 'sorted',
+  $gr_timezone                           = 'GMT',
+  $gr_storage_schemas                    = [
     {
       name       => 'carbon',
       pattern    => '^carbon\.',
@@ -393,7 +460,7 @@ class graphite (
       retentions => '1s:30m,1m:1d,5m:2y'
     }
   ],
-  $gr_storage_aggregation_rules  = {
+  $gr_storage_aggregation_rules          = {
     '00_min' => {
       pattern => '\.min$',
       factor => '0.1',
@@ -415,38 +482,38 @@ class graphite (
       method => 'average'
     }
   },
-  $gr_web_server                = 'apache',
-  $gr_web_servername            = $::fqdn,
-  $gr_web_group                 = 'apache',
-  $gr_web_user                  = 'apache',
-  $gr_web_cors_allow_from_all   = false,
-  $gr_use_ssl                   = false,
-  $gr_ssl_cert                  = undef,
-  $gr_ssl_key                   = undef,
-  $gr_ssl_dir                   = undef,
-  $gr_apache_port               = 80,
-  $gr_apache_port_https         = 443,
-  $gr_apache_conf_template      = 'graphite/etc/apache2/sites-available/graphite.conf.erb',
-  $gr_apache_24                 = false,
-  $gr_django_1_4_or_less        = false,
-  $gr_django_db_engine          = 'django.db.backends.sqlite3',
-  $gr_django_db_name            = '/var/lib/graphite-web/graphite.db',
-  $gr_django_db_user            = '',
-  $gr_django_db_password        = '',
-  $gr_django_db_host            = '',
-  $gr_django_db_port            = '',
-  $gr_enable_carbon_relay       = false,
-  $gr_relay_enable_udp_listener = 'False',
-  $gr_relay_line_interface      = '0.0.0.0',
-  $gr_relay_line_port           = 2013,
-  $gr_relay_pickle_interface    = '0.0.0.0',
-  $gr_relay_pickle_port         = 2014,
-  $gr_relay_method              = 'rules',
-  $gr_relay_replication_factor  = 1,
-  $gr_relay_destinations        = [ '127.0.0.1:2004' ],
-  $gr_relay_max_queue_size      = 10000,
-  $gr_relay_use_flow_control    = 'True',
-  $gr_relay_rules               = {
+  $gr_web_server                         = 'apache',
+  $gr_web_servername                     = $::fqdn,
+  $gr_web_group                          = 'apache',
+  $gr_web_user                           = 'apache',
+  $gr_web_cors_allow_from_all            = false,
+  $gr_use_ssl                            = false,
+  $gr_ssl_cert                           = undef,
+  $gr_ssl_key                            = undef,
+  $gr_ssl_dir                            = undef,
+  $gr_apache_port                        = 80,
+  $gr_apache_port_https                  = 443,
+  $gr_apache_conf_template               = 'graphite/etc/apache2/sites-available/graphite.conf.erb',
+  $gr_apache_24                          = false,
+  $gr_django_1_4_or_less                 = false,
+  $gr_django_db_engine                   = 'django.db.backends.sqlite3',
+  $gr_django_db_name                     = '/var/lib/graphite-web/graphite.db',
+  $gr_django_db_user                     = '',
+  $gr_django_db_password                 = '',
+  $gr_django_db_host                     = '',
+  $gr_django_db_port                     = '',
+  $gr_enable_carbon_relay                = false,
+  $gr_relay_enable_udp_listener          = 'False',
+  $gr_relay_line_interface               = '0.0.0.0',
+  $gr_relay_line_port                    = 2013,
+  $gr_relay_pickle_interface             = '0.0.0.0',
+  $gr_relay_pickle_port                  = 2014,
+  $gr_relay_method                       = 'rules',
+  $gr_relay_replication_factor           = 1,
+  $gr_relay_destinations                 = [ '127.0.0.1:2004' ],
+  $gr_relay_max_queue_size               = 10000,
+  $gr_relay_use_flow_control             = 'True',
+  $gr_relay_rules                        = {
     all => {
       pattern      => '.*',
       destinations => [ '127.0.0.1:2004' ]
@@ -456,62 +523,81 @@ class graphite (
       destinations => [ '127.0.0.1:2004:a' ]
     },
   },
-  $gr_enable_carbon_aggregator  = false,
-  $gr_aggregator_line_interface = '0.0.0.0',
-  $gr_aggregator_line_port      = 2023,
-  $gr_aggregator_pickle_interface = '0.0.0.0',
-  $gr_aggregator_pickle_port    = 2024,
-  $gr_aggregator_forward_all    = 'True',
-  $gr_aggregator_destinations   = [ '127.0.0.1:2004' ],
-  $gr_aggregator_replication_factor = 1,
-  $gr_aggregator_max_queue_size = 10000,
-  $gr_aggregator_use_flow_control = 'True',
-  $gr_aggregator_max_intervals  = 5,
-  $gr_aggregator_rules          = {
-    'carbon-class-mem' => 'carbon.all.<class>.memUsage (60) = sum carbon.<class>.*.memUsage',
+  $gr_enable_carbon_aggregator           = false,
+  $gr_aggregator_line_interface          = '0.0.0.0',
+  $gr_aggregator_line_port               = 2023,
+  $gr_aggregator_enable_udp_listener     = 'False',
+  $gr_aggregator_udp_receiver_interface  = '0.0.0.0',
+  $gr_aggregator_udp_receiver_port       = 2023,
+  $gr_aggregator_pickle_interface        = '0.0.0.0',
+  $gr_aggregator_pickle_port             = 2024,
+  $gr_aggregator_forward_all             = 'True',
+  $gr_aggregator_destinations            = [ '127.0.0.1:2004' ],
+  $gr_aggregator_replication_factor      = 1,
+  $gr_aggregator_max_queue_size          = 10000,
+  $gr_aggregator_use_flow_control        = 'True',
+  $gr_aggregator_max_intervals           = 5,
+  $gr_aggregator_rules                   = {
     'carbon-all-mem'   => 'carbon.all.memUsage (60) = sum carbon.*.*.memUsage',
+    'carbon-class-mem' => 'carbon.all.<class>.memUsage (60) = sum carbon.<class>.*.memUsage',
     },
-  $gr_amqp_enable               = 'False',
-  $gr_amqp_verbose              = 'False',
-  $gr_amqp_host                 = 'localhost',
-  $gr_amqp_port                 = 5672,
-  $gr_amqp_vhost                = '/',
-  $gr_amqp_user                 = 'guest',
-  $gr_amqp_password             = 'guest',
-  $gr_amqp_exchange             = 'graphite',
-  $gr_amqp_metric_name_in_body  = 'False',
-  $gr_memcache_hosts            = undef,
-  $secret_key                   = 'UNSAFE_DEFAULT',
-  $gr_cluster_servers           = undef,
-  $gr_carbonlink_hosts          = undef,
-  $gr_cluster_fetch_timeout     = 6,
-  $gr_cluster_find_timeout      = 2.5,
-  $gr_cluster_retry_delay       = 60,
-  $gr_cluster_cache_duration    = 300,
-  $nginx_htpasswd               = undef,
-  $nginx_proxy_read_timeout     = 10,
-  $manage_ca_certificate        = true,
-  $gr_use_ldap                  = false,
-  $gr_ldap_uri                  = '',
-  $gr_ldap_search_base          = '',
-  $gr_ldap_base_user            = '',
-  $gr_ldap_base_pass            = '',
-  $gr_ldap_user_query           = '(username=%s)',
-  $gr_ldap_options              = {},
-  $gr_use_remote_user_auth      = 'False',
-  $gr_remote_user_header_name   = undef,
-  $gr_local_data_dir            = '/var/lib/carbon/whisper/',
-  $gunicorn_arg_timeout         = 30,
-  $gunicorn_workers             = 2,
-  $gr_cache_instances           = [],
-  $gr_relay_instances           = [],
-  $gr_aggregator_instances      = [],
-  $gr_whisper_lock_writes       = 'False',
-  $gr_whisper_fallocate_create  = 'False',
-  $gr_log_cache_performance     = 'False',
-  $gr_log_rendering_performance = 'False',
-  $gr_log_metric_access         = 'False',
-) {
+  $gr_amqp_enable                        = 'False',
+  $gr_amqp_verbose                       = 'False',
+  $gr_amqp_host                          = 'localhost',
+  $gr_amqp_port                          = 5672,
+  $gr_amqp_vhost                         = '/',
+  $gr_amqp_user                          = 'guest',
+  $gr_amqp_password                      = 'guest',
+  $gr_amqp_exchange                      = 'graphite',
+  $gr_amqp_metric_name_in_body           = 'False',
+  $gr_memcache_hosts                     = undef,
+  $secret_key                            = 'UNSAFE_DEFAULT',
+  $gr_cluster_servers                    = undef,
+  $gr_carbonlink_hosts                   = undef,
+  $gr_cluster_fetch_timeout              = 6,
+  $gr_cluster_find_timeout               = 2.5,
+  $gr_cluster_retry_delay                = 60,
+  $gr_cluster_cache_duration             = 300,
+  $nginx_htpasswd                        = undef,
+  $nginx_proxy_read_timeout              = 10,
+  $manage_ca_certificate                 = true,
+  $gr_use_ldap                           = false,
+  $gr_ldap_uri                           = '',
+  $gr_ldap_search_base                   = '',
+  $gr_ldap_base_user                     = '',
+  $gr_ldap_base_pass                     = '',
+  $gr_ldap_user_query                    = '(username=%s)',
+  $gr_ldap_options                       = {},
+  $gr_use_remote_user_auth               = 'False',
+  $gr_remote_user_header_name            = undef,
+  $gr_local_data_dir                     = '/var/lib/carbon/whisper/',
+  $gunicorn_arg_timeout                  = 30,
+  $gunicorn_workers                      = 2,
+  $gr_cache_instances                    = [],
+  $gr_relay_instances                    = [],
+  $gr_aggregator_instances               = [],
+  $gr_whisper_lock_writes                = 'False',
+  $gr_whisper_fallocate_create           = 'False',
+  $gr_log_cache_performance              = 'False',
+  $gr_log_rendering_performance          = 'False',
+  $gr_log_metric_access                  = 'False',
+  $wsgi_processes                        =  5,
+  $wsgi_threads                          =  5,
+  $wsgi_inactivity_timeout               =  120,
+  $gr_django_tagging_pkg                 = $::graphite::params::django_tagging_pkg,
+  $gr_django_tagging_ver                 = $::graphite::params::django_tagging_ver,
+  $gr_twisted_pkg                        = $::graphite::params::twisted_pkg,
+  $gr_twisted_ver                        = $::graphite::params::twisted_ver,
+  $gr_txamqp_pkg                         = $::graphite::params::txamqp_pkg,
+  $gr_txamqp_ver                         = $::graphite::params::txamqp_ver,
+  $gr_graphite_pkg                       = $::graphite::params::graphite_pkg,
+  $gr_graphite_ver                       = $::graphite::params::graphite_ver,
+  $gr_carbon_pkg                         = $::graphite::params::carbon_pkg,
+  $gr_carbon_ver                         = $::graphite::params::carbon_ver,
+  $gr_whisper_pkg                        = $::graphite::params::whisper_pkg,
+  $gr_whisper_ver                        = $::graphite::params::whisper_ver,
+  $gr_pip_install                        = true,
+) inherits graphite::params {
   # Validation of input variables.
   # TODO - validate all the things
   validate_string($gr_use_remote_user_auth)
@@ -530,5 +616,4 @@ class graphite (
   class{'graphite::service': }    ~>
   class{'graphite::monitoring': } ~>
   anchor { 'graphite::end':}
-
 }
