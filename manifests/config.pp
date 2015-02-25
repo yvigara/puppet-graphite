@@ -60,7 +60,7 @@ class graphite::config {
   # change access permissions for web server
 
   exec { 'Chown graphite for web user':
-    command     => "chown -R ${::graphite::gr_web_user}:${::graphite::gr_web_group} /var/lib/carbon/",
+    command     => "chown -R ${::graphite::gr_user}:${::graphite::gr_group} /var/lib/carbon/",
     cwd         => '/var/lib/',
     refreshonly => true,
     require     => $web_server_package_require,
